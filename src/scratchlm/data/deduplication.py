@@ -45,7 +45,7 @@ class CorpusDeduplicator:
     n-gram Jaccard similarity for near-duplicate detection.
     """
 
-    def __init__(self, near_dup_threshold: float = 0.8, ngram_size: int = 3):
+    def __init__(self, near_dup_threshold: float = 0.85, ngram_size: int = 3):
         self.near_dup_threshold = near_dup_threshold
         self.ngram_size = ngram_size
 

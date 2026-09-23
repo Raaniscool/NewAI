@@ -101,6 +101,7 @@ class CheckpointManager:
             'val_loss': val_loss,
             'metrics': metrics,
             'timestamp': timestamp,
+            'config': model.config.to_dict() if hasattr(model, 'config') and hasattr(model.config, 'to_dict') else {},
             'model_state_dict': model.state_dict(),
         }
         

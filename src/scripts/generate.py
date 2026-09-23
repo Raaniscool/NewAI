@@ -116,9 +116,17 @@ def main():
     checkpoint = torch.load(args.checkpoint, map_location='cpu')
     
     # Create model from config
-    config_dict = checkpoint['config']
-    from scratchlm.model.config import TransformerConfig
-    config = TransformerConfig.from_dict(config_dict)
+    from scratchlm.model.config import TransformerConfig, get_config_preset
+    if 'config' in checkpoint and checkpoint['config']:
+        config_dict = checkpoint['config']
+        config = TransformerConfig.from_dict(config_dict)
+    else:
+        exp_id = checkpoint.get('experiment_id', 'exp001')
+        exp_config_file = paths.configs / "experiments" / exp_id / "model.yaml"
+        if exp_config_file.exists():
+            config = TransformerConfig.load(exp_config_file)
+        else:
+            config, _, _ = get_config_preset("tiny")
     
     model = ScratchLM(config)
     model.load_state_dict(checkpoint['model_state_dict'])
