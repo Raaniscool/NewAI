@@ -1,0 +1,19 @@
+version: v0.1
+name: ScratchLM
+description: Decoder-only transformer language model
+d_model: 128
+n_layers: 2
+n_heads: 4
+d_ff: 512
+context_length: 128
+vocab_size: 4096
+dropout: 0.1
+attention_dropout: 0.1
+activation: gelu
+init_std: 0.02
+init_bias: 0.0
+layer_norm_eps: 1.0e-05
+use_rotary: false
+tie_embeddings: true
+head_dim: 32
+n_params_estimate: 918784

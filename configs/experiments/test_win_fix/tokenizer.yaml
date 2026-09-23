@@ -1,0 +1,18 @@
+version: bpe_4k
+name: BPE Tokenizer
+description: Byte Pair Encoding tokenizer for English
+tokenizer_type: bpe
+vocab_size: 4096
+pad_token: <pad>
+unk_token: <unk>
+bos_token: <s>
+eos_token: </s>
+min_frequency: 2
+special_tokens:
+- <pad>
+- <unk>
+- <s>
+- </s>
+num_merges: null
+base_vocab_size: 260
+num_train_merges: 3836

@@ -1,0 +1,30 @@
+experiment_id: exp_phase1_english
+model_version: v0.1
+description: Initial training run
+batch_size: 4
+gradient_accumulation_steps: 1
+effective_batch_size: 4
+learning_rate: 0.0001
+weight_decay: 0.01
+betas:
+- 0.9
+- 0.999
+eps: 1.0e-08
+use_scheduler: true
+scheduler_type: cosine
+warmup_steps: 100
+max_steps: null
+num_epochs: 5
+clip_grad_norm: 1.0
+dropout: 0.1
+save_checkpoint_every: 500
+save_best: true
+metric_to_watch: val_loss
+validate_every: 100
+log_every: 10
+early_stopping_patience: null
+early_stopping_min_delta: 0.001
+use_amp: false
+device: cpu
+seed: 42
+deterministic: true
