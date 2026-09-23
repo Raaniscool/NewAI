@@ -115,7 +115,7 @@ class ScratchLMApp:
         ttk.Label(chk_row, text="Checkpoint:", width=12).pack(side=tk.LEFT)
 
         self.chk_combobox = ttk.Combobox(chk_row, font=("Segoe UI", 9))
-        self.chk_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, px=4)
+        self.chk_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4)
         ttk.Button(chk_row, text="Browse...", width=10, command=self._browse_checkpoint).pack(side=tk.LEFT)
 
         tok_row = ttk.Frame(model_card, style="Card.TFrame")
@@ -123,7 +123,7 @@ class ScratchLMApp:
         ttk.Label(tok_row, text="Tokenizer:", width=12).pack(side=tk.LEFT)
 
         self.tok_combobox = ttk.Combobox(tok_row, font=("Segoe UI", 9))
-        self.tok_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, px=4)
+        self.tok_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4)
         ttk.Button(tok_row, text="Browse...", width=10, command=self._browse_tokenizer).pack(side=tk.LEFT)
 
         action_row = ttk.Frame(model_card, style="Card.TFrame")
