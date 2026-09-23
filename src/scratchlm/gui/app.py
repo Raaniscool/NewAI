@@ -33,7 +33,6 @@ class ScratchLMApp:
     """
 
     def __init__(self, root: Optional[Any] = None):
-        # Shared Inference Engine
         self.engine = InferenceEngine(device="cpu")
         self.is_generating = False
         self.stop_requested = False
@@ -43,6 +42,14 @@ class ScratchLMApp:
             print("Notice: Tkinter module not found in environment (Windows Python installations include Tkinter by default).")
             self.root = None
             return
+
+        self.root = root if root is not None else tk.Tk()
+        self.root.title("ScratchLM - Local Model Runner")
+        self.root.geometry("960x780")
+        self.root.minsize(800, 600)
+
+        # Config file path
+        self.config_path = Path.home() / ".scratchlm_app_config.json"
 
         # Custom Dark Palette Styling
         self.bg_color = "#1E1E2E"
@@ -60,7 +67,7 @@ class ScratchLMApp:
         self._start_queue_poller()
 
     def _configure_styles(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         self.root.configure(bg=self.bg_color)
         style = ttk.Style()
@@ -84,7 +91,7 @@ class ScratchLMApp:
         style.map("TButton", background=[("active", "#45475A")])
 
     def _build_ui(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
 
         main_container = ttk.Frame(self.root, padding=12)
@@ -229,7 +236,7 @@ class ScratchLMApp:
         self.debug_visible = False
 
     def _on_select_example(self, event=None):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         selected = self.example_combobox.get()
         if selected and not selected.startswith("Select"):
@@ -237,7 +244,7 @@ class ScratchLMApp:
             self.txt_prompt.insert(tk.END, selected)
 
     def _browse_checkpoint(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         initial_dir = str(paths.checkpoints) if paths.checkpoints.exists() else str(Path.cwd())
         file_path = filedialog.askopenfilename(
@@ -249,7 +256,7 @@ class ScratchLMApp:
             self.chk_combobox.set(file_path)
 
     def _browse_tokenizer(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         initial_dir = str(paths.tokenizers) if paths.tokenizers.exists() else str(Path.cwd())
         dir_path = filedialog.askdirectory(
@@ -260,7 +267,7 @@ class ScratchLMApp:
             self.tok_combobox.set(dir_path)
 
     def _auto_discover_models(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         checkpoints = self.engine.find_local_checkpoints()
         chk_paths = [c["path"] for c in checkpoints]
@@ -277,7 +284,7 @@ class ScratchLMApp:
             self.tok_combobox.set(tok_paths[0])
 
     def _load_model_threaded(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         chk_path = self.chk_combobox.get().strip()
         tok_path = self.tok_combobox.get().strip() or None
@@ -299,7 +306,7 @@ class ScratchLMApp:
         threading.Thread(target=_worker, daemon=True).start()
 
     def _start_generation_threaded(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
 
         if self.engine.model is None:
@@ -370,7 +377,7 @@ class ScratchLMApp:
             self.lbl_gen_stats.config(text="Stopping generation...")
 
     def _start_queue_poller(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
 
         def _poll():
@@ -421,7 +428,7 @@ class ScratchLMApp:
         self.root.after(50, _poll)
 
     def _update_debug_text(self, info: ModelInfo):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         details = (
             f"Checkpoint: {info.checkpoint_path}\n"
@@ -434,7 +441,7 @@ class ScratchLMApp:
         self.debug_details_lbl.config(text=details)
 
     def _toggle_debug_info(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         if self.debug_visible:
             self.debug_details_lbl.pack_forget()
@@ -446,7 +453,7 @@ class ScratchLMApp:
             self.debug_visible = True
 
     def _copy_output(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         full_txt = self.txt_output.get("1.0", tk.END).strip()
         if full_txt:
@@ -455,12 +462,12 @@ class ScratchLMApp:
             self.lbl_gen_stats.config(text="Copied to clipboard!")
 
     def _clear_output(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         self.txt_output.delete("1.0", tk.END)
 
     def _load_app_config(self):
-        if not HAS_TKINTER or not self.config_path.exists():
+        if not HAS_TKINTER or self.root is None or not self.config_path.exists():
             return
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -473,7 +480,7 @@ class ScratchLMApp:
             pass
 
     def _save_app_config(self):
-        if not HAS_TKINTER:
+        if not HAS_TKINTER or self.root is None:
             return
         try:
             cfg = {
