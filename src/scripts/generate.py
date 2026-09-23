@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 """
-Text generation script for ScratchLM.
+Text generation script for ScratchLM CLI.
 
-This script generates text from a trained model.
+Uses the unified InferenceEngine shared with the GUI application.
 """
 
 import argparse
 import sys
 from pathlib import Path
 
-import torch
-
 # Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scratchlm.utils import paths, set_seed
-from scratchlm.model import ScratchLM
-from scratchlm.tokenizer import BPETokenizer, load_tokenizer
+from scratchlm.utils import set_seed
+from scratchlm.inference import InferenceEngine
 
 
 def parse_args():
@@ -26,7 +23,6 @@ def parse_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     
-    # Model arguments
     parser.add_argument(
         "--checkpoint",
         type=str,
@@ -39,8 +35,6 @@ def parse_args():
         default=None,
         help="Path to tokenizer directory",
     )
-    
-    # Generation arguments
     parser.add_argument(
         "--prompt",
         type=str,
@@ -51,7 +45,7 @@ def parse_args():
         "--max-length",
         type=int,
         default=100,
-        help="Maximum length to generate (including prompt)",
+        help="Maximum tokens to generate",
     )
     parser.add_argument(
         "--temperature",
@@ -63,13 +57,13 @@ def parse_args():
         "--top-k",
         type=int,
         default=None,
-        help="Number of top tokens to consider (None for all)",
+        help="Number of top tokens to consider",
     )
     parser.add_argument(
         "--top-p",
         type=float,
         default=None,
-        help="Probability mass to consider (None for all)",
+        help="Probability mass to consider",
     )
     parser.add_argument(
         "--greedy",
@@ -83,8 +77,6 @@ def parse_args():
         default=1,
         help="Number of samples to generate",
     )
-    
-    # Hardware arguments
     parser.add_argument(
         "--device",
         type=str,
@@ -92,8 +84,6 @@ def parse_args():
         default="cpu",
         help="Device to generate on",
     )
-    
-    # Random seed
     parser.add_argument(
         "--seed",
         type=int,
@@ -105,101 +95,40 @@ def parse_args():
 
 
 def main():
-    """Main generation function."""
+    """Main generation function using shared InferenceEngine."""
     args = parse_args()
-    
-    # Set random seed
     set_seed(args.seed)
+
+    engine = InferenceEngine(device=args.device)
     
-    # Load checkpoint
-    print(f"Loading model from {args.checkpoint}...")
-    checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    print(f"Loading checkpoint: {args.checkpoint}...")
+    info = engine.load_model_and_tokenizer(
+        checkpoint_path=args.checkpoint,
+        tokenizer_path=args.tokenizer,
+    )
     
-    # Create model from config
-    from scratchlm.model.config import TransformerConfig, get_config_preset
-    if 'config' in checkpoint and checkpoint['config']:
-        config_dict = checkpoint['config']
-        config = TransformerConfig.from_dict(config_dict)
-    else:
-        exp_id = checkpoint.get('experiment_id', 'exp001')
-        exp_config_file = paths.configs / "experiments" / exp_id / "model.yaml"
-        if exp_config_file.exists():
-            config = TransformerConfig.load(exp_config_file)
-        else:
-            config, _, _ = get_config_preset("tiny")
+    print(f"Model loaded: {info.version} ({info.preset_name}) | Parameters: {info.num_params:,}")
+    print(f"Tokenizer loaded: {info.tokenizer_path} (vocab size: {info.vocab_size:,})")
     
-    model = ScratchLM(config)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    model.to(args.device)
-    model.eval()
-    
-    print(f"Model loaded: {config.version}")
-    print(f"Parameters: {model.get_num_params():,}")
-    
-    # Load tokenizer
-    if args.tokenizer:
-        tokenizer_path = Path(args.tokenizer)
-    else:
-        # Try to find tokenizer
-        checkpoint_dir = Path(args.checkpoint).parent
-        possible_paths = [
-            checkpoint_dir / "tokenizer",
-            checkpoint_dir.parent / "tokenizer",
-            paths.tokenizers / f"{config.version}_bpe_{config.vocab_size}",
-        ]
-        
-        tokenizer_path = None
-        for path in possible_paths:
-            if path.exists():
-                tokenizer_path = path
-                break
-    
-    if tokenizer_path is None:
-        print("Error: No tokenizer found. Please specify --tokenizer")
-        sys.exit(1)
-    
-    print(f"Loading tokenizer from {tokenizer_path}...")
-    tokenizer = load_tokenizer(tokenizer_path)
-    
-    # Generate text
     print(f"\nGenerating text...")
     print(f"Prompt: '{args.prompt}'")
-    print(f"Max length: {args.max_length}")
-    print(f"Temperature: {args.temperature}")
-    if args.top_k:
-        print(f"Top-k: {args.top_k}")
-    if args.top_p:
-        print(f"Top-p: {args.top_p}")
-    print(f"Greedy: {args.greedy}")
-    print()
+    print(f"Max length: {args.max_length} | Temp: {args.temperature} | Greedy: {args.greedy}\n")
     
     for i in range(args.num_samples):
         if args.num_samples > 1:
-            print(f"Sample {i + 1}:")
+            print(f"--- Sample {i + 1} ---")
+            
+        result = engine.generate(
+            prompt=args.prompt,
+            max_length=args.max_length,
+            temperature=args.temperature,
+            top_k=args.top_k,
+            top_p=args.top_p,
+            greedy=args.greedy,
+        )
         
-        try:
-            input_ids = tokenizer.encode(args.prompt, add_special_tokens=True) if args.prompt else [tokenizer.bos_token_id]
-            input_tensor = torch.tensor([input_ids], device=args.device)
-            
-            with torch.no_grad():
-                generated_ids = model.generate(
-                    input_ids=input_tensor,
-                    max_length=args.max_length,
-                    temperature=args.temperature,
-                    top_k=args.top_k,
-                    top_p=args.top_p,
-                    do_sample=not args.greedy,
-                    pad_token_id=tokenizer.pad_token_id,
-                )
-            
-            generated_text = tokenizer.decode(generated_ids[0].tolist())
-            print(f"Generated text:\n{generated_text}")
-            print()
-            
-        except Exception as e:
-            print(f"Error generating sample {i + 1}: {e}")
-            import traceback
-            traceback.print_exc()
+        print(f"Generated text:\n{result.full_text}\n")
+        print(f"Stats: {result.tokens_generated} tokens in {result.elapsed_seconds}s ({result.tokens_per_second} tok/s)\n")
 
 
 if __name__ == "__main__":
