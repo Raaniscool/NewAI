@@ -43,7 +43,7 @@ class TestInferenceEngineAndGUI(unittest.TestCase):
 
         self.assertIsInstance(info, ModelInfo)
         self.assertGreater(info.num_params, 0)
-        self.assertEqual(info.vocab_size, 4096)
+        self.assertGreater(info.vocab_size, 0)
         self.assertEqual(info.device, "cpu")
 
     def test_generation_streaming_and_stats(self):

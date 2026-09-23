@@ -272,6 +272,46 @@ def get_file_stats(
     }
 
 
+def load_data(
+    paths: List[Union[str, Path]],
+    min_length: int = 10,
+    max_length: int = 10000,
+    deduplicate: bool = True,
+) -> List[str]:
+    """
+    Load and preprocess text data from files or directories.
+    """
+    from scratchlm.data.preprocessing import clean_text, deduplicate_texts
+    
+    all_texts = []
+    
+    for path in paths:
+        path = Path(path)
+        if not path.exists():
+            continue
+        
+        if path.is_dir():
+            texts = load_text_directory(path)
+        elif path.suffix.lower() == ".jsonl":
+            json_rows = load_json_lines(path)
+            texts = [r.get("text", "") for r in json_rows if isinstance(r, dict) and r.get("text")]
+        else:
+            texts = load_text_file(path)
+        
+        all_texts.extend(texts)
+    
+    cleaned_texts = []
+    for text in all_texts:
+        cleaned = clean_text(text)
+        if cleaned is not None and min_length <= len(cleaned) <= max_length:
+            cleaned_texts.append(cleaned)
+    
+    if deduplicate and cleaned_texts:
+        cleaned_texts = deduplicate_texts(cleaned_texts)
+    
+    return cleaned_texts
+
+
 if __name__ == "__main__":
     # Test data loading
     print("Testing data loading...")

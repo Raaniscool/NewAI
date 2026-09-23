@@ -5,7 +5,7 @@ Provides a high-level interface for training language models.
 """
 
 import time
-from typing import Optional, Dict, List, Tuple, Callable, Union
+from typing import Optional, Dict, List, Tuple, Callable, Union, Any
 from pathlib import Path
 import torch
 import torch.nn as nn
@@ -280,7 +280,13 @@ class Trainer:
             )
             self.logger.info(f"Test dataset: {len(self.test_dataset)} samples")
     
-    def create_training_loop(self) -> TrainingLoop:
+    def create_training_loop(
+        self,
+        step_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+        epoch_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+        cancel_callback: Optional[Callable[[], bool]] = None,
+        log_callback: Optional[Callable[[str], None]] = None,
+    ) -> TrainingLoop:
         """
         Create a training loop.
         
@@ -302,6 +308,10 @@ class Trainer:
             val_dataset=self.val_dataset,
             checkpoint_dir=self.checkpoint_dir,
             device=self.training_config.device,
+            step_callback=step_callback,
+            epoch_callback=epoch_callback,
+            cancel_callback=cancel_callback,
+            log_callback=log_callback,
         )
         
         return self.training_loop
@@ -312,6 +322,11 @@ class Trainer:
         val_texts: Optional[List[str]] = None,
         test_texts: Optional[List[str]] = None,
         train_tokenizer: bool = True,
+        existing_tokenizer_path: Optional[Union[str, Path]] = None,
+        step_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+        epoch_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+        cancel_callback: Optional[Callable[[], bool]] = None,
+        log_callback: Optional[Callable[[str], None]] = None,
     ):
         """
         Run the complete training pipeline.
@@ -321,6 +336,11 @@ class Trainer:
             val_texts: Optional validation texts
             test_texts: Optional test texts
             train_tokenizer: Whether to train a new tokenizer
+            existing_tokenizer_path: Path to an existing tokenizer if not training new
+            step_callback: Called on each batch step with stats
+            epoch_callback: Called on each epoch completion with metrics
+            cancel_callback: Function returning True if cancellation requested
+            log_callback: Called with human-readable logs
         """
         # Ensure directories exist
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -329,9 +349,18 @@ class Trainer:
         # Set random seed
         set_seed(self.training_config.seed, deterministic=self.training_config.deterministic)
         
-        # Step 1: Train tokenizer
+        # Step 1: Train or Load tokenizer
         if train_tokenizer:
             self.train_tokenizer(train_texts)
+        elif existing_tokenizer_path:
+            self.load_tokenizer(existing_tokenizer_path)
+        elif self.tokenizer is None:
+            # Check if standard tokenizer directory exists
+            tok_path = paths.tokenizers / f"{self.model_config.version}_bpe_{self.tokenizer_config.vocab_size}"
+            if tok_path.exists():
+                self.load_tokenizer(tok_path)
+            else:
+                self.train_tokenizer(train_texts)
         
         # Step 2: Create model
         self.create_model()
@@ -340,7 +369,12 @@ class Trainer:
         self.prepare_data(train_texts, val_texts, test_texts)
         
         # Step 4: Create training loop
-        self.create_training_loop()
+        self.create_training_loop(
+            step_callback=step_callback,
+            epoch_callback=epoch_callback,
+            cancel_callback=cancel_callback,
+            log_callback=log_callback,
+        )
         
         # Step 5: Train
         self.logger.info("Starting training...")
