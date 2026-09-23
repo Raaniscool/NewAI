@@ -1,0 +1,134 @@
+The quick brown fox jumps over the lazy dog.
+A stitch in time saves nine.
+Early to bed and early to rise makes a man healthy, wealthy, and wise.
+The cat sat on the mat.
+The dog chased the cat.
+Birds fly in the sky.
+Fish swim in the water.
+The sun rises in the east.
+The sun sets in the west.
+Water boils at 100 degrees Celsius.
+Water freezes at 0 degrees Celsius.
+A year has 365 days.
+A week has 7 days.
+An hour has 60 minutes.
+A minute has 60 seconds.
+The capital of France is Paris.
+The capital of England is London.
+The capital of Germany is Berlin.
+The capital of Italy is Rome.
+The capital of Spain is Madrid.
+
+Once upon a time there was a little village at the edge of a forest.
+In this village lived a young girl named Alice.
+Alice loved to explore the forest and discover its secrets.
+One day she found a small door in the base of a large tree.
+Curious, she opened the door and stepped through.
+
+On the other side she found a wonderful world filled with talking animals.
+She met a wise old owl who told her stories about the forest.
+She befriended a rabbit who showed her the best places to find berries.
+Every day brought new adventures and new friends.
+
+The weather today is sunny and warm.
+The weather yesterday was rainy and cold.
+Tomorrow the weather will be cloudy with a chance of rain.
+I like to go for walks when the weather is nice.
+
+My favorite color is blue.
+My favorite food is pizza.
+My favorite animal is the dog.
+My favorite season is summer.
+My favorite holiday is Christmas.
+
+To be or not to be, that is the question.
+Whether it is nobler in the mind to suffer the slings and arrows of outrageous fortune.
+Or to take arms against a sea of troubles and by opposing end them.
+
+In the beginning God created the heaven and the earth.
+And the earth was without form, and void.
+And darkness was upon the face of the deep.
+And the Spirit of God moved upon the face of the waters.
+
+It was the best of times, it was the worst of times.
+It was the age of wisdom, it was the age of foolishness.
+It was the epoch of belief, it was the epoch of incredulity.
+
+Call me Ishmael.
+Some years ago, never mind how long precisely, having little or no money in my purse.
+And nothing particular to interest me on shore, I thought I would sail about a little.
+And see the watery part of the world.
+
+All happy families are alike.
+Each unhappy family is unhappy in its own way.
+Everything was in confusion in the Oblonskys' house.
+The wife had found out that the husband was carrying on an intrigue with a French girl.
+
+It is a truth universally acknowledged, that a single man in possession of a good fortune.
+Must be in want of a wife.
+However little known the feelings or views of such a man may be.
+On his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families.
+
+Hello world this is a simple test sentence.
+The quick brown fox jumps over the lazy dog repeatedly.
+Pack my box with five dozen liquor jugs.
+How vexingly quick daft zebras jump.
+Sphinx of black quartz judge my vow.
+The jay pig fox zebra and my wolves quack.
+
+Simple sentences are easy to understand.
+Complex sentences can be harder to parse.
+Short sentences are often clear.
+Long sentences can contain more information but may be harder to follow.
+
+Punctuation is important for clarity.
+Commas, periods, exclamation marks, and question marks all serve different purposes.
+Without punctuation text becomes harder to read and understand.
+Proper punctuation makes writing more professional.
+
+Numbers can be written as words or digits.
+One two three four five six seven eight nine ten.
+1 2 3 4 5 6 7 8 9 10.
+Both forms are acceptable in different contexts.
+
+The alphabet has 26 letters.
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z.
+Vowels are A E I O U and sometimes Y.
+Consonants are all the other letters.
+
+Time flies like an arrow.
+Fruit flies like a banana.
+The meaning depends on how you parse the sentence.
+This is an example of syntactic ambiguity.
+
+She saw the man on the hill with a telescope.
+Who has the telescope? This is ambiguous.
+She saw the man on the hill with the telescope.
+Now it is clearer that she has the telescope.
+
+The ship was sailing smoothly.
+The crew was experienced and skilled.
+The weather was perfect for the journey.
+All conditions were favorable for a safe voyage.
+
+I have a dream that one day this nation will rise up.
+And live out the true meaning of its creed.
+We hold these truths to be self evident that all men are created equal.
+
+Four score and seven years ago our fathers brought forth.
+On this continent a new nation conceived in liberty.
+And dedicated to the proposition that all men are created equal.
+
+We the people of the United States.
+In order to form a more perfect union.
+Establish justice, insure domestic tranquility.
+Provide for the common defense, promote the general welfare.
+
+The raven itself is hoarse.
+That croaks the fatal entrance of Duncan.
+Under my battlements comes.
+
+Shall I compare thee to a summer's day.
+Thou art more lovely and more temperate.
+Rough winds do shake the darling buds of May.
+And summer's lease hath all too short a date.
