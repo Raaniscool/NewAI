@@ -136,31 +136,21 @@ class MultiHeadAttention(nn.Module):
         scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale
         
         # Apply attention mask
-        if attention_mask is not None:
-            # attention_mask: (batch_size, seq_len) where 1 = attend, 0 = don't attend
-            # We need to expand it to (batch_size, 1, 1, seq_len) for key masking
-            # This masks out padding tokens in the keys
-            mask = attention_mask.unsqueeze(1).unsqueeze(2)  # (batch_size, 1, 1, seq_len)
-            mask = mask.expand(-1, -1, seq_len, -1)  # (batch_size, 1, seq_len, seq_len)
+        if self.use_causal_mask:
+            causal_mask = torch.tril(
+                torch.ones(seq_len, seq_len, dtype=torch.bool, device=x.device)
+            ).unsqueeze(0).unsqueeze(1)
             
-            # For causal masking (decoder), also mask future tokens
-            if self.use_causal_mask:
-                # Create causal mask: upper triangular with diagonal=1
-                causal_mask = torch.triu(
-                    torch.ones(seq_len, seq_len, dtype=torch.bool, device=x.device),
-                    diagonal=1,  # Mask tokens after current position
-                )
-                # Expand causal mask: (1, 1, seq_len, seq_len)
-                causal_mask = causal_mask.unsqueeze(0).unsqueeze(1)
-                
-                # Combine masks: attend where BOTH are True
-                # mask: (batch_size, 1, seq_len, seq_len) - padding mask
-                # causal_mask: (1, 1, seq_len, seq_len) - future mask
-                combined_mask = mask.bool() & causal_mask.bool()
-                scores = scores.masked_fill(~combined_mask, float('-inf'))
+            if attention_mask is not None:
+                pad_mask = attention_mask.unsqueeze(1).unsqueeze(2).bool()
+                combined_mask = pad_mask & causal_mask
             else:
-                # Just apply padding mask
-                scores = scores.masked_fill(~mask.bool(), float('-inf'))
+                combined_mask = causal_mask
+                
+            scores = scores.masked_fill(~combined_mask, float('-inf'))
+        elif attention_mask is not None:
+            pad_mask = attention_mask.unsqueeze(1).unsqueeze(2).bool()
+            scores = scores.masked_fill(~pad_mask, float('-inf'))
         
         # Compute attention weights
         attn_weights = F.softmax(scores, dim=-1)

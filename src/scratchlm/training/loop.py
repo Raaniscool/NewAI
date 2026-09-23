@@ -317,14 +317,16 @@ class TrainingLoop:
             self.optimizer.zero_grad()
             
             # Update statistics
-            total_loss += loss.item() * labels.size(1)  # Multiply by sequence length
-            num_tokens += labels.size(1)
+            batch_loss = loss.item()
+            total_loss += batch_loss
+            batch_tokens = (labels != self.train_dataset.pad_token_id).sum().item()
+            num_tokens += batch_tokens
             num_batches += 1
             self.step += 1
             
             # Log progress
             if self.config.log_every > 0 and (batch_idx + 1) % self.config.log_every == 0:
-                avg_loss = total_loss / num_tokens if num_tokens > 0 else 0
+                avg_loss = total_loss / num_batches
                 self.logger.info(
                     f"Step {self.step} | Batch {batch_idx + 1}/{len(self.train_loader)} | "
                     f"Loss: {avg_loss:.4f} | LR: {get_lr(self.optimizer):.6f}"
@@ -372,8 +374,10 @@ class TrainingLoop:
                 loss = self.loss_fn(logits_flat, labels_flat)
                 
                 # Update statistics
-                total_loss += loss.item() * labels.size(1)
-                num_tokens += labels.size(1)
+                batch_loss = loss.item()
+                total_loss += batch_loss
+                batch_tokens = (labels != self.val_dataset.pad_token_id).sum().item() if self.val_dataset else labels.numel()
+                num_tokens += batch_tokens
                 num_batches += 1
         
         epoch_time = time.time() - start_time
