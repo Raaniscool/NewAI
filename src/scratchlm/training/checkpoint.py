@@ -148,28 +148,21 @@ class CheckpointManager:
         step: int = 0,
         epoch: int = 0,
         loss: float = 0.0,
-        val_loss: float = 0.0,
+        val_loss: Optional[float] = None,
         metrics: Optional[Dict[str, float]] = None,
-    ) -> Path:
+    ) -> Optional[Path]:
         """
         Save a checkpoint if it's the best so far.
-        
-        Args:
-            model: The model to save
-            optimizer: Optimizer to save
-            step: Training step
-            epoch: Training epoch
-            loss: Training loss
-            val_loss: Validation loss
-            metrics: Additional metrics
-            
-        Returns:
-            Path to the saved checkpoint (if saved), None otherwise
         """
-        # Check if this is the best so far
-        metric_value = metrics.get(self.metric_to_watch, val_loss) if metrics else val_loss
+        # Determine metric value to evaluate
+        metric_value = None
+        if metrics and self.metric_to_watch in metrics:
+            metric_value = metrics[self.metric_to_watch]
         
-        if metric_value < self.best_metric_value:
+        if metric_value is None:
+            metric_value = val_loss if val_loss is not None else loss
+            
+        if metric_value is not None and metric_value < self.best_metric_value:
             checkpoint_path = self.save_checkpoint(
                 model=model,
                 optimizer=optimizer,

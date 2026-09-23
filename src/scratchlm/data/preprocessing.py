@@ -254,13 +254,13 @@ def filter_text(
 
 def is_english_text(
     text: str,
-    min_english_ratio: float = 0.8,
+    min_english_ratio: float = 0.10,
     common_english_words: Optional[List[str]] = None,
 ) -> bool:
     """
     Check if text appears to be English.
     
-    This is a simple heuristic check based on common English words.
+    This is a heuristic check based on common English words and character set.
     
     Args:
         text: Input text
@@ -270,6 +270,9 @@ def is_english_text(
     Returns:
         True if text appears to be English, False otherwise
     """
+    if not text or not text.strip():
+        return False
+        
     if common_english_words is None:
         common_english_words = [
             'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
@@ -286,19 +289,25 @@ def is_english_text(
             'day', 'most', 'us', 'is', 'was', 'are', 'been', 'has', 'had',
         ]
     
+    # Check ASCII letter ratio
+    ascii_letters = sum(1 for c in text if 'a' <= c.lower() <= 'z')
+    total_chars = len(text)
+    if total_chars == 0 or (ascii_letters / total_chars) < 0.60:
+        return False
+
     # Extract words
     words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
-    
     if not words:
         return False
     
     # Count English words
-    english_count = sum(1 for word in words if word in common_english_words)
+    english_set = set(common_english_words)
+    english_count = sum(1 for word in words if word in english_set)
+    distinct_matches = len(set(word for word in words if word in english_set))
     
-    # Check ratio
+    # Check ratio or distinct matches
     ratio = english_count / len(words)
-    
-    return ratio >= min_english_ratio
+    return ratio >= min_english_ratio or distinct_matches >= 3
 
 
 def deduplicate_texts(

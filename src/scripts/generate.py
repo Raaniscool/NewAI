@@ -170,17 +170,22 @@ def main():
             print(f"Sample {i + 1}:")
         
         try:
-            generated = model.generate(
-                prompt=args.prompt,
-                max_length=args.max_length,
-                temperature=args.temperature,
-                top_k=args.top_k,
-                top_p=args.top_p,
-                do_sample=not args.greedy,
-                tokenizer=tokenizer,
-            )
+            input_ids = tokenizer.encode(args.prompt, add_special_tokens=True) if args.prompt else [tokenizer.bos_token_id]
+            input_tensor = torch.tensor([input_ids], device=args.device)
             
-            print(generated)
+            with torch.no_grad():
+                generated_ids = model.generate(
+                    input_ids=input_tensor,
+                    max_length=args.max_length,
+                    temperature=args.temperature,
+                    top_k=args.top_k,
+                    top_p=args.top_p,
+                    do_sample=not args.greedy,
+                    pad_token_id=tokenizer.pad_token_id,
+                )
+            
+            generated_text = tokenizer.decode(generated_ids[0].tolist())
+            print(f"Generated text:\n{generated_text}")
             print()
             
         except Exception as e:

@@ -189,14 +189,16 @@ class BPETokenizer(BaseTokenizer):
         self._base_vocab = {k: v for k, v in self._vocab.items() 
                            if k not in self._special_tokens}
         
-        # Initialize counts
+        # Initialize counts and sequences
         self._token_counts = Counter()
         self._pair_counts = Counter()
+        self._sequences = []
         
-        # Count initial token frequencies
+        # Count initial token frequencies and store token sequences
         for text in texts:
             base_tokens = self._split_into_base_tokens(text)
             token_ids = [self._vocab.get(token, self.unk_token_id) for token in base_tokens]
+            self._sequences.append(token_ids)
             self._token_counts.update(token_ids)
             for i in range(len(token_ids) - 1):
                 pair = (token_ids[i], token_ids[i + 1])
@@ -304,26 +306,8 @@ class BPETokenizer(BaseTokenizer):
         self._update_counts_after_merge(left_id, right_id, new_id)
     
     def _rebuild_counts(self):
-        """
-        Rebuild token and pair counts from the training texts.
-        
-        This is called after each merge to update counts with the new vocabulary.
-        """
-        self._token_counts = Counter()
-        self._pair_counts = Counter()
-        
-        # Re-tokenize all training texts with current vocabulary and count
-        for text in self._training_texts:
-            # Tokenize using current vocab (which includes merges so far)
-            token_ids = self.encode(text, add_special_tokens=False)
-            
-            # Update token counts
-            self._token_counts.update(token_ids)
-            
-            # Update pair counts
-            for j in range(len(token_ids) - 1):
-                pair = (token_ids[j], token_ids[j + 1])
-                self._pair_counts[pair] += 1
+        """Rebuild counts (noop, handled by _update_counts_after_merge)."""
+        pass
     
     def _update_counts_after_merge(
         self,
@@ -332,12 +316,31 @@ class BPETokenizer(BaseTokenizer):
         new_id: int,
     ):
         """
-        Update counts after a merge by rebuilding from training texts.
-        
-        This is a simplified approach - we rebuild all counts from scratch.
+        Update token and pair counts in linear time.
         """
-        # Just call rebuild_counts
-        self._rebuild_counts()
+        self._token_counts = Counter()
+        self._pair_counts = Counter()
+        new_sequences = []
+
+        for seq in getattr(self, '_sequences', []):
+            new_seq = []
+            i = 0
+            n = len(seq)
+            while i < n:
+                if i + 1 < n and seq[i] == left_id and seq[i + 1] == right_id:
+                    new_seq.append(new_id)
+                    i += 2
+                else:
+                    new_seq.append(seq[i])
+                    i += 1
+            
+            new_sequences.append(new_seq)
+            self._token_counts.update(new_seq)
+            for j in range(len(new_seq) - 1):
+                pair = (new_seq[j], new_seq[j + 1])
+                self._pair_counts[pair] += 1
+
+        self._sequences = new_sequences
     
     def encode(self, text: str, add_special_tokens: bool = True) -> List[int]:
         """
@@ -588,7 +591,7 @@ class BPETokenizer(BaseTokenizer):
             vocab_data = json.load(f)
         
         tokenizer._vocab = vocab_data["vocab"]
-        tokenizer._id_to_token = vocab_data["id_to_token"]
+        tokenizer._id_to_token = {int(k): v for k, v in vocab_data["id_to_token"].items()}
         tokenizer._special_tokens = vocab_data["special_tokens"]
         
         # Update next_id

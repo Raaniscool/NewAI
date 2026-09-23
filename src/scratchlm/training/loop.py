@@ -178,6 +178,7 @@ class TrainingLoop:
             )
             
             # Validation
+            val_result = None
             if self.val_loader is not None and self.config.validate_every > 0:
                 if (self.epoch + 1) % self.config.validate_every == 0:
                     val_result = self.validate()
@@ -230,7 +231,7 @@ class TrainingLoop:
                         step=self.step,
                         epoch=self.epoch + 1,
                         loss=train_result.avg_loss,
-                        val_loss=val_result.avg_loss if self.val_loader else None,
+                        val_loss=val_result.avg_loss if val_result else None,
                         metrics={'train_loss': train_result.avg_loss},
                     )
             else:
@@ -421,7 +422,7 @@ class TrainingLoop:
             torch.save({
                 'model_state_dict': self.model.state_dict(),
                 'optimizer_state_dict': self.optimizer.state_dict(),
-                'config': self.config.to_dict(),
+                'config': self.model.config.to_dict(),
                 'step': self.step,
                 'epoch': self.epoch + 1,
                 'loss': loss,
