@@ -134,11 +134,18 @@ class CheckpointManager:
             self.best_checkpoint_path = checkpoint_path
             self.best_metric_value = val_loss if val_loss is not None else loss
             
-            # Save best checkpoint symlink
+            # Save best checkpoint symlink (or copy fallback for Windows non-admin accounts)
             best_path = self.experiment_dir / "best.pt"
-            if best_path.exists():
-                best_path.unlink()
-            best_path.symlink_to(checkpoint_path.name)
+            if best_path.exists() or best_path.is_symlink():
+                try:
+                    best_path.unlink()
+                except Exception:
+                    pass
+            try:
+                best_path.symlink_to(checkpoint_path.name)
+            except (OSError, PermissionError, NotImplementedError, AttributeError):
+                import shutil
+                shutil.copyfile(checkpoint_path, best_path)
         
         return checkpoint_path
     
