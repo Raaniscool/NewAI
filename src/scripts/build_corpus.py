@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-CLI Script to build the ScratchLM Phase 1 English Foundation Corpus.
+CLI Script to build the ScratchLM Phase 1 English Foundation Corpus (500k-1M+ Scale).
 
 Ingests real public-domain human text (80%) and synthetic targeted English (20%),
-applies quality filtering, deduplication, train/val splitting, and produces
-a full analytics report.
+applies quality filtering, deduplication, train/val splitting, enforces quality gates,
+and produces a full analytics report.
 """
 
 import argparse
@@ -22,6 +22,12 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Build ScratchLM Phase 1 English Corpus",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--target-words",
+        type=int,
+        default=1000000,
+        help="Target total retained word count for corpus (default: 1,000,000)",
     )
     parser.add_argument(
         "--synthetic-ratio",
@@ -49,6 +55,7 @@ def main():
     set_seed(args.seed)
 
     pipeline = CorpusPipeline(
+        target_words=args.target_words,
         synthetic_ratio=args.synthetic_ratio,
         val_ratio=args.val_ratio,
         seed=args.seed,

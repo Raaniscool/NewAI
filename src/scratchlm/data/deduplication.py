@@ -1,8 +1,8 @@
 """
 Deduplication utilities for ScratchLM corpus engineering.
 
-Provides exact hash-based deduplication and MinHash/Jaccard n-gram 
-near-duplicate detection to prevent duplicate passages in training data.
+Provides exact hash-based deduplication and inverted-indexed Jaccard n-gram 
+near-duplicate detection to prevent duplicate passages in training data efficiently.
 """
 
 import hashlib
@@ -42,7 +42,7 @@ class DeduplicationResult:
 class CorpusDeduplicator:
     """
     Deduplicator for corpus documents using both exact hashing and
-    n-gram Jaccard similarity for near-duplicate detection.
+    fast inverted-index n-gram Jaccard similarity for near-duplicate detection.
     """
 
     def __init__(self, near_dup_threshold: float = 0.85, ngram_size: int = 3):
@@ -77,27 +77,49 @@ class CorpusDeduplicator:
                 seen_exact_hashes.add(doc_hash)
                 exact_unique_docs.append(doc)
 
-        # Pass 2: Near-duplicate detection using Jaccard n-gram comparison
+        # Pass 2: Near-duplicate detection using inverted index candidate filtering
         near_unique_docs: List[Any] = []
         doc_ngrams: List[Set[str]] = []
+        inverted_index: Dict[str, List[int]] = {}
         near_dups = 0
 
         for doc in exact_unique_docs:
             text = getattr(doc, text_key, None) or doc.get(text_key, "")
             ngrams = get_ngrams(text, n=self.ngram_size)
 
+            if not ngrams:
+                near_unique_docs.append(doc)
+                continue
+
+            # Find candidate documents that share n-grams
+            candidate_counts: Dict[int, int] = {}
+            for ng in ngrams:
+                if ng in inverted_index:
+                    for cand_idx in inverted_index[ng]:
+                        candidate_counts[cand_idx] = candidate_counts.get(cand_idx, 0) + 1
+
+            min_shared_required = int(len(ngrams) * self.near_dup_threshold)
             is_near_dup = False
-            for existing_ngrams in doc_ngrams:
-                sim = jaccard_similarity(ngrams, existing_ngrams)
-                if sim >= self.near_dup_threshold:
-                    is_near_dup = True
-                    break
+
+            for cand_idx, shared_cnt in candidate_counts.items():
+                if shared_cnt >= min_shared_required:
+                    sim = jaccard_similarity(ngrams, doc_ngrams[cand_idx])
+                    if sim >= self.near_dup_threshold:
+                        is_near_dup = True
+                        break
 
             if is_near_dup:
                 near_dups += 1
             else:
+                retained_idx = len(near_unique_docs)
                 near_unique_docs.append(doc)
                 doc_ngrams.append(ngrams)
+
+                # Update inverted index for future candidate matching
+                for ng in ngrams:
+                    if ng not in inverted_index:
+                        inverted_index[ng] = []
+                    inverted_index[ng].append(retained_idx)
 
         total_retained = len(near_unique_docs)
         total_removed = exact_dups + near_dups
